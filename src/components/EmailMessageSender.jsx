@@ -136,6 +136,7 @@ const EmailMessageSender = () => {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({
           emails: emails.split(',').map(email => email.trim()),
           subject,
