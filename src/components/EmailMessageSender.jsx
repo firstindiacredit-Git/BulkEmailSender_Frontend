@@ -9,7 +9,8 @@ const EmailMessageSender = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [fileUploadError, setFileUploadError] = useState(null)
 
-  // Excel से ईमेल एक्सट्रैक्ट करने का फंक्शन
+  // Excel file parsing function
+  // This function extracts email addresses from the uploaded Excel file
   const extractEmailsFromExcel = (file) => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader()
@@ -47,7 +48,7 @@ const EmailMessageSender = () => {
     })
   }
 
-  // फ़ाइल अपलोड हैंडलर
+  // file upload handler
   const handleFileUpload = async (event) => {
     const file = event.target.files[0]
     setFileUploadError(null)
@@ -56,7 +57,7 @@ const EmailMessageSender = () => {
 
     const fileType = file.name.split('.').pop().toLowerCase()
     if (!['xlsx', 'xls', 'csv'].includes(fileType)) {
-      setFileUploadError("कृपया केवल Excel या CSV फ़ाइल अपलोड करें")
+      setFileUploadError("Please upload a valid Excel or CSV file")
       return
     }
 
@@ -65,20 +66,20 @@ const EmailMessageSender = () => {
       const extractedEmails = await extractEmailsFromExcel(file)
 
       if (extractedEmails.length === 0) {
-        setFileUploadError("फ़ाइल में कोई वैध ईमेल एड्रेस नहीं मिला")
+        setFileUploadError("No valid email addresses found in the file")
         return
       }
 
       setEmails(extractedEmails.join(', '))
       setStatus('Emails loaded successfully from Excel!')
     } catch (err) {
-      setFileUploadError("फ़ाइल को पढ़ने में त्रुटि। कृपया सही फॉर्मैट वाली फ़ाइल अपलोड करें।")
+      setFileUploadError("Error reading file. Please upload a valid format file.")
     } finally {
       setIsLoading(false)
     }
   }
 
-  // ड्रैग एंड ड्रॉप हैंडलर्स
+  // drag and drop handlers
   const handleDragOver = (e) => {
     e.preventDefault()
     e.stopPropagation()
@@ -102,7 +103,7 @@ const EmailMessageSender = () => {
       const fileType = file.name.split('.').pop().toLowerCase()
       
       if (!['xlsx', 'xls', 'csv'].includes(fileType)) {
-        setFileUploadError("कृपया केवल Excel या CSV फ़ाइल अपलोड करें")
+        setFileUploadError("Please upload a valid Excel or CSV file")
         return
       }
 
@@ -111,14 +112,14 @@ const EmailMessageSender = () => {
         const extractedEmails = await extractEmailsFromExcel(file)
 
         if (extractedEmails.length === 0) {
-          setFileUploadError("फ़ाइल में कोई वैध ईमेल एड्रेस नहीं मिला")
+          setFileUploadError("No valid email addresses found in the file")
           return
         }
 
         setEmails(extractedEmails.join(', '))
         setStatus('Emails loaded successfully from Excel!')
       } catch (err) {
-        setFileUploadError("फ़ाइल को पढ़ने में त्रुटि। कृपया सही फॉर्मैट वाली फ़ाइल अपलोड करें।")
+        setFileUploadError("Error reading file. Please upload a valid format file.")
       } finally {
         setIsLoading(false)
       }
