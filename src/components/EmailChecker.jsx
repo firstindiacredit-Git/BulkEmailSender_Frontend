@@ -1,16 +1,14 @@
 import React, { useState } from 'react'
 import * as XLSX from 'xlsx'
 
-const EmailMessageSender = () => {
+const EmailChecker = () => {
   const [emails, setEmails] = useState('')
-  const [subject, setSubject] = useState('')
-  const [message, setMessage] = useState('')
   const [status, setStatus] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [fileUploadError, setFileUploadError] = useState(null)
+  const [checkResults, setCheckResults] = useState([])
 
   // Excel file parsing function
-  // This function extracts email addresses from the uploaded Excel file
   const extractEmailsFromExcel = (file) => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader()
@@ -126,33 +124,32 @@ const EmailMessageSender = () => {
     }
   }
 
-  const handleSubmit = async (e) => {
+  const handleCheckEmails = async (e) => {
     e.preventDefault()
     setIsLoading(true)
-    setStatus('Sending...')
+    setStatus('Checking emails...')
+    setCheckResults([])
     
     try {
-      const response = await fetch('http://localhost:5000/send-emails', {
+      const emailList = emails.split(',').map(email => email.trim()).filter(email => email)
+      
+      const response = await fetch('http://localhost:5000/validate-emails', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
         body: JSON.stringify({
-          emails: emails.split(',').map(email => email.trim()),
-          subject,
-          message
+          emails: emailList
         })
       })
 
       const data = await response.json()
       if (data.success) {
-        setStatus('Emails sent successfully!')
-        setEmails('')
-        setSubject('')
-        setMessage('')
+        setCheckResults(data.results)
+        setStatus(`Email check completed! ${data.summary.valid}/${data.summary.total} emails are valid.`)
       } else {
-        setStatus('Failed to send emails: ' + data.error)
+        setStatus('Failed to validate emails: ' + data.error)
       }
     } catch (error) {
       setStatus('Error: ' + error.message)
@@ -167,11 +164,11 @@ const EmailMessageSender = () => {
       <div className="w-full max-w-5xl mb-2 sm:mb-4 text-center px-2">
         <div className="flex items-center justify-center mb-2">
           <h1 className="text-xl sm:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-800">
-            Email Bulk Message Sender
+            Email Validator & Checker
           </h1>
         </div>
         <p className="text-gray-600 max-w-4xl mx-auto text-xs sm:text-sm mb-2 sm:mb-4">
-          Send bulk emails efficiently. Enter email addresses separated by commas.
+          Validate and check email addresses in bulk. Upload Excel files or enter emails manually.
         </p>
       </div>
 
@@ -218,12 +215,12 @@ const EmailMessageSender = () => {
                 <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                   Email Addresses
                 </label>
-          <textarea 
+                <textarea 
                   className="w-full p-2 sm:p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white text-sm"
                   placeholder="Enter email addresses separated by commas"
-            value={emails}
-            onChange={(e) => setEmails(e.target.value)}
-            required
+                  value={emails}
+                  onChange={(e) => setEmails(e.target.value)}
+                  required
                   rows={4}
                 />
                 <div className="flex justify-between mt-1 sm:mt-2">
@@ -232,35 +229,11 @@ const EmailMessageSender = () => {
                     {emails ? emails.split(',').filter(n => n.trim()).length : 0} emails
                   </p>
                 </div>
-        </div>
-
-              <div className="bg-white rounded-xl p-3 sm:p-4 border border-gray-200 shadow-sm hover:shadow-md transition-all">
-                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Subject</label>
-          <input 
-            type="text" 
-                  className="w-full p-2 sm:p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white text-sm"
-                  placeholder="Enter email subject"
-            value={subject}
-            onChange={(e) => setSubject(e.target.value)}
-            required
-          />
-        </div>
-
-              <div className="bg-white rounded-xl p-3 sm:p-4 border border-gray-200 shadow-sm hover:shadow-md transition-all">
-                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Message Content</label>
-          <textarea 
-                  className="w-full p-2 sm:p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white text-sm"
-                  placeholder="Enter your message"
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            required
-                  rows={4}
-                />
               </div>
 
               <button
                 className="w-full py-2 sm:py-3 bg-gradient-to-r from-blue-600 to-indigo-700 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-indigo-800 transition-all transform hover:scale-[1.01] shadow-md hover:shadow-lg disabled:opacity-50 disabled:hover:scale-100 flex items-center justify-center text-sm"
-                onClick={handleSubmit}
+                onClick={handleCheckEmails}
                 disabled={isLoading}
               >
                 {isLoading ? (
@@ -269,39 +242,71 @@ const EmailMessageSender = () => {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    Sending Emails...
+                    Checking Emails...
                   </>
                 ) : (
                   <>
                     <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
-                    Send Emails
+                    Check Emails
                   </>
                 )}
               </button>
             </div>
 
-            {/* Right Column - Status */}
+            {/* Right Column - Results */}
             <div className="w-full lg:w-1/2 bg-white rounded-xl p-3 sm:p-4 border border-gray-200 shadow-sm hover:shadow-md transition-all mt-3 lg:mt-0">
               <div className="flex justify-between items-center mb-2 sm:mb-3">
                 <h3 className="text-sm sm:text-md font-semibold text-gray-800 flex items-center">
                   <svg className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                   </svg>
-                  Status
+                  Validation Results
                 </h3>
               </div>
 
-              <div className="flex flex-col items-center justify-center h-56 sm:h-64 md:h-72 lg:h-80 bg-white rounded-lg border border-gray-200">
+              <div className="flex flex-col items-center justify-center min-h-56 sm:min-h-64 md:min-h-72 lg:min-h-80 bg-white rounded-lg border border-gray-200">
                 {isLoading ? (
                   <div className="flex flex-col items-center justify-center">
                     <svg className="animate-spin h-8 w-8 sm:h-10 sm:w-10 text-indigo-500 mb-2 sm:mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    <p className="text-indigo-600 font-medium text-xs sm:text-sm">Sending emails...</p>
+                    <p className="text-indigo-600 font-medium text-xs sm:text-sm">Checking emails...</p>
                     <p className="text-gray-500 text-xs mt-1">Please wait</p>
+                  </div>
+                ) : checkResults.length > 0 ? (
+                  <div className="w-full max-h-80 overflow-y-auto">
+                    <div className="space-y-2">
+                      {checkResults.map((result, index) => (
+                        <div key={index} className={`flex items-center justify-between p-2 rounded-lg border ${
+                          result.status === 'Valid' 
+                            ? 'bg-green-50 border-green-200' 
+                            : 'bg-red-50 border-red-200'
+                        }`}>
+                          <span className="text-sm font-medium text-gray-700 truncate flex-1 mr-2">
+                            {result.email}
+                          </span>
+                          <div className="flex items-center">
+                            {result.status === 'Valid' ? (
+                              <svg className="w-4 h-4 text-green-500 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                              </svg>
+                            ) : (
+                              <svg className="w-4 h-4 text-red-500 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                              </svg>
+                            )}
+                            <span className={`text-xs font-medium ${
+                              result.status === 'Valid' ? 'text-green-600' : 'text-red-600'
+                            }`}>
+                              {result.status}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 ) : status ? (
                   <div className={`text-center p-4 rounded-lg ${status.includes('Error') || status.includes('Failed') ? 'text-red-600 bg-red-50' : 'text-green-600 bg-green-50'}`}>
@@ -317,10 +322,10 @@ const EmailMessageSender = () => {
                 ) : (
                   <div className="text-center">
                     <svg className="w-12 h-12 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <p className="text-gray-700 font-medium text-sm">Ready to send emails</p>
-                    <p className="text-xs text-gray-500 mt-1">Enter email addresses and message to begin</p>
+                    <p className="text-gray-700 font-medium text-sm">Ready to check emails</p>
+                    <p className="text-xs text-gray-500 mt-1">Enter email addresses to validate</p>
                   </div>
                 )}
               </div>
@@ -331,13 +336,13 @@ const EmailMessageSender = () => {
 
       {/* Footer */}
       <div className="text-center w-full max-w-5xl mt-3 sm:mt-4 py-2 px-2 sm:px-4">
-        <div className="text-xs text-gray-600 font-bold mb-1">DISCLAIMER: Use this service responsibly and in accordance with email regulations.</div>
+        <div className="text-xs text-gray-600 font-bold mb-1">DISCLAIMER: Email validation is for format and domain checking only.</div>
         <p className="text-xs text-gray-500">
-          © {new Date().getFullYear()} Email Bulk Message Sender | All Rights Reserved
+          © {new Date().getFullYear()} Email Validator & Checker | All Rights Reserved
         </p>
       </div>
     </div>
   )
 }
 
-export default EmailMessageSender
+export default EmailChecker
