@@ -266,7 +266,7 @@ const EmailChecker = () => {
                 </h3>
               </div>
 
-              <div className="flex flex-col items-center justify-center min-h-56 sm:min-h-64 md:min-h-72 lg:min-h-80 bg-white rounded-lg border border-gray-200">
+              <div className="flex flex-col items-center justify-center h-56 sm:h-64 md:h-72 lg:h-80 bg-white rounded-lg border border-gray-200">
                 {isLoading ? (
                   <div className="flex flex-col items-center justify-center">
                     <svg className="animate-spin h-8 w-8 sm:h-10 sm:w-10 text-indigo-500 mb-2 sm:mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
