@@ -5,6 +5,8 @@ const EmailMessageSender = () => {
   const [emails, setEmails] = useState('')
   const [subject, setSubject] = useState('')
   const [message, setMessage] = useState('')
+  const [emailUser, setEmailUser] = useState('')
+  const [emailPass, setEmailPass] = useState('')
   const [status, setStatus] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [fileUploadError, setFileUploadError] = useState(null)
@@ -141,7 +143,9 @@ const EmailMessageSender = () => {
         body: JSON.stringify({
           emails: emails.split(',').map(email => email.trim()),
           subject,
-          message
+          message,
+          emailUser,
+          emailPass
         })
       })
 
@@ -151,6 +155,8 @@ const EmailMessageSender = () => {
         setEmails('')
         setSubject('')
         setMessage('')
+        setEmailUser('')
+        setEmailPass('')
       } else {
         setStatus('Failed to send emails: ' + data.error)
       }
@@ -171,7 +177,7 @@ const EmailMessageSender = () => {
           </h1>
         </div>
         <p className="text-gray-600 max-w-4xl mx-auto text-xs sm:text-sm mb-2 sm:mb-4">
-          Send bulk emails efficiently. Enter email addresses separated by commas.
+          Send bulk emails efficiently using your own Gmail account. Enter your Gmail credentials and recipient email addresses.
         </p>
       </div>
 
@@ -233,6 +239,40 @@ const EmailMessageSender = () => {
                   </p>
                 </div>
         </div>
+
+              {/* Gmail Credentials Section */}
+              <div className="bg-white rounded-xl p-3 sm:p-4 border border-gray-200 shadow-sm hover:shadow-md transition-all">
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+                  Gmail Credentials
+                </label>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Gmail Address</label>
+                    <input 
+                      type="email" 
+                      className="w-full p-2 sm:p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white text-sm"
+                      placeholder="your-email@gmail.com"
+                      value={emailUser}
+                      onChange={(e) => setEmailUser(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">App Password</label>
+                    <input 
+                      type="password" 
+                      className="w-full p-2 sm:p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white text-sm"
+                      placeholder="Your Gmail App Password"
+                      value={emailPass}
+                      onChange={(e) => setEmailPass(e.target.value)}
+                      required
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Generate App Password from Google Account Settings → Security → 2-Step Verification → App passwords
+                    </p>
+                  </div>
+                </div>
+              </div>
 
               <div className="bg-white rounded-xl p-3 sm:p-4 border border-gray-200 shadow-sm hover:shadow-md transition-all">
                 <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Subject</label>
