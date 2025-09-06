@@ -186,6 +186,39 @@ const EmailMessageSender = () => {
           <div className="flex flex-col lg:flex-row gap-4">
             {/* Left Column - Input Form */}
             <div className="w-full lg:w-1/2 space-y-3 sm:space-y-4">
+            {/* Gmail Credentials Section */}
+            <div className="bg-white rounded-xl p-3 sm:p-4 border border-gray-200 shadow-sm hover:shadow-md transition-all">
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+                  Gmail Credentials
+                </label>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Gmail Address</label>
+                    <input 
+                      type="email" 
+                      className="w-full p-2 sm:p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white text-sm"
+                      placeholder="your-email@gmail.com"
+                      value={emailUser}
+                      onChange={(e) => setEmailUser(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">App Password</label>
+                    <input 
+                      type="password" 
+                      className="w-full p-2 sm:p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white text-sm"
+                      placeholder="Your Gmail App Password"
+                      value={emailPass}
+                      onChange={(e) => setEmailPass(e.target.value)}
+                      required
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Generate App Password from Google Account Settings → Security → 2-Step Verification → App passwords
+                    </p>
+                  </div>
+                </div>
+              </div>
               {/* Excel Upload Section */}
               <div className="bg-white rounded-xl p-3 sm:p-4 border border-gray-200 shadow-sm hover:shadow-md transition-all">
                 <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
@@ -240,39 +273,6 @@ const EmailMessageSender = () => {
                 </div>
         </div>
 
-              {/* Gmail Credentials Section */}
-              <div className="bg-white rounded-xl p-3 sm:p-4 border border-gray-200 shadow-sm hover:shadow-md transition-all">
-                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
-                  Gmail Credentials
-                </label>
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">Gmail Address</label>
-                    <input 
-                      type="email" 
-                      className="w-full p-2 sm:p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white text-sm"
-                      placeholder="your-email@gmail.com"
-                      value={emailUser}
-                      onChange={(e) => setEmailUser(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">App Password</label>
-                    <input 
-                      type="password" 
-                      className="w-full p-2 sm:p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white text-sm"
-                      placeholder="Your Gmail App Password"
-                      value={emailPass}
-                      onChange={(e) => setEmailPass(e.target.value)}
-                      required
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      Generate App Password from Google Account Settings → Security → 2-Step Verification → App passwords
-                    </p>
-                  </div>
-                </div>
-              </div>
 
               <div className="bg-white rounded-xl p-3 sm:p-4 border border-gray-200 shadow-sm hover:shadow-md transition-all">
                 <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Subject</label>
