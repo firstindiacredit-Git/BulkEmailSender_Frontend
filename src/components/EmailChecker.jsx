@@ -96,33 +96,35 @@ const EmailChecker = () => {
     e.currentTarget.classList.remove('border-blue-500', 'bg-blue-50')
 
     const files = e.dataTransfer.files
-    if (files.length > 0) {
-      const file = files[0]
-      const fileType = file.name.split('.').pop().toLowerCase()
-      
-      if (!['xlsx', 'xls', 'csv'].includes(fileType)) {
-        setFileUploadError("Please upload a valid Excel or CSV file")
+    if (files.length === 0) return
+
+    const file = files[0]
+    setFileUploadError(null)
+
+    const fileType = file.name.split('.').pop().toLowerCase()
+    if (!['xlsx', 'xls', 'csv'].includes(fileType)) {
+      setFileUploadError("Please upload a valid Excel or CSV file")
+      return
+    }
+
+    try {
+      setIsLoading(true)
+      const extractedEmails = await extractEmailsFromExcel(file)
+
+      if (extractedEmails.length === 0) {
+        setFileUploadError("No valid email addresses found in the file")
         return
       }
 
-      try {
-        setIsLoading(true)
-        const extractedEmails = await extractEmailsFromExcel(file)
-
-        if (extractedEmails.length === 0) {
-          setFileUploadError("No valid email addresses found in the file")
-          return
-        }
-
-        setEmails(extractedEmails.join(', '))
-        setStatus('Emails loaded successfully from Excel!')
-      } catch (err) {
-        setFileUploadError("Error reading file. Please upload a valid format file.")
-      } finally {
-        setIsLoading(false)
-      }
+      setEmails(extractedEmails.join(', '))
+      setStatus('Emails loaded successfully from Excel!')
+    } catch (err) {
+      setFileUploadError("Error reading file. Please upload a valid format file.")
+    } finally {
+      setIsLoading(false)
     }
   }
+  
 
   const handleCheckEmails = async (e) => {
     e.preventDefault()
@@ -158,6 +160,48 @@ const EmailChecker = () => {
     }
   }
 
+  // CSV download function
+  const downloadCSV = () => {
+    if (checkResults.length === 0) return
+
+    // Create CSV content
+    let csvContent = 'Email Address,Status,Valid,Invalid,Reason\n'
+    
+    // Add validation results
+    checkResults.forEach(result => {
+      const valid = result.status === 'Valid' ? 'Yes' : 'No'
+      const invalid = result.status === 'Valid' ? 'No' : 'Yes'
+      const reason = result.reason || result.status
+      
+      // Escape commas and quotes in CSV
+      const escapedEmail = `"${result.email.replace(/"/g, '""')}"`
+      const escapedReason = `"${reason.replace(/"/g, '""')}"`
+      
+      csvContent += `${escapedEmail},${result.status},${valid},${invalid},${escapedReason}\n`
+    })
+
+    // Add summary section
+    const validCount = checkResults.filter(r => r.status === 'Valid').length
+    const invalidCount = checkResults.length - validCount
+    
+    csvContent += '\n'
+    csvContent += 'SUMMARY\n'
+    csvContent += `Total Emails,${checkResults.length}\n`
+    csvContent += `Valid Emails,${validCount}\n`
+    csvContent += `Invalid Emails,${invalidCount}\n`
+
+    // Create and download file
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    const url = URL.createObjectURL(blob)
+    link.setAttribute('href', url)
+    link.setAttribute('download', `email_validation_results_${new Date().toISOString().split('T')[0]}.csv`)
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen w-full p-2 sm:p-4 bg-gray-50">
       {/* Header Section */}
@@ -168,7 +212,7 @@ const EmailChecker = () => {
           </h1>
         </div>
         <p className="text-gray-600 max-w-4xl mx-auto text-xs sm:text-sm mb-2 sm:mb-4">
-          Validate and check email addresses in bulk. Upload Excel files or enter emails manually.
+          Advanced email validation with format checking, domain verification, typo detection, disposable email detection, and role-based email identification.
         </p>
       </div>
 
@@ -264,9 +308,20 @@ const EmailChecker = () => {
                   </svg>
                   Validation Results
                 </h3>
+                {checkResults.length > 0 && (
+                  <button
+                    onClick={downloadCSV}
+                    className="flex items-center px-3 py-1.5 bg-green-600 text-white text-xs font-medium rounded-lg hover:bg-green-700 transition-all transform hover:scale-105"
+                  >
+                    <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    Download CSV
+                  </button>
+                )}
               </div>
 
-              <div className="flex flex-col items-center justify-center h-56 sm:h-64 md:h-72 lg:h-80 bg-white rounded-lg border border-gray-200">
+              <div className="flex flex-col items-center justify-center h-[28rem] sm:h-64 md:h-72 bg-white rounded-lg border border-gray-200">
                 {isLoading ? (
                   <div className="flex flex-col items-center justify-center">
                     <svg className="animate-spin h-8 w-8 sm:h-10 sm:w-10 text-indigo-500 mb-2 sm:mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -277,33 +332,50 @@ const EmailChecker = () => {
                     <p className="text-gray-500 text-xs mt-1">Please wait</p>
                   </div>
                 ) : checkResults.length > 0 ? (
-                  <div className="w-full max-h-80 overflow-y-auto">
+                  <div className="w-full max-h-[25rem] overflow-y-auto">
                     <div className="space-y-2">
                       {checkResults.map((result, index) => (
-                        <div key={index} className={`flex items-center justify-between p-2 rounded-lg border ${
-                          result.status === 'Valid' 
-                            ? 'bg-green-50 border-green-200' 
-                            : 'bg-red-50 border-red-200'
-                        }`}>
-                          <span className="text-sm font-medium text-gray-700 truncate flex-1 mr-2">
-                            {result.email}
-                          </span>
-                          <div className="flex items-center">
-                            {result.status === 'Valid' ? (
-                              <svg className="w-4 h-4 text-green-500 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                              </svg>
-                            ) : (
-                              <svg className="w-4 h-4 text-red-500 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
-                              </svg>
-                            )}
-                            <span className={`text-xs font-medium ${
-                              result.status === 'Valid' ? 'text-green-600' : 'text-red-600'
-                            }`}>
-                              {result.status}
+                        <div key={index} className="p-3 rounded-lg border border-gray-200 bg-white">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-sm font-medium text-gray-700 truncate flex-1 mr-2">
+                              {result.email}
                             </span>
+                            <div className="flex items-center">
+                              {result.status === 'Valid' ? (
+                                <svg className="w-4 h-4 text-green-500 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                              ) : result.status === 'Disposable Email' || result.status === 'Role-based Email' ? (
+                                <svg className="w-4 h-4 text-yellow-500 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                                </svg>
+                              ) : (
+                                <svg className="w-4 h-4 text-red-500 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                              )}
+                              <span className={`text-xs font-medium ${
+                                result.status === 'Valid' 
+                                  ? 'text-green-600' 
+                                  : result.status === 'Disposable Email' || result.status === 'Role-based Email'
+                                  ? 'text-yellow-600'
+                                  : 'text-red-600'
+                              }`}>
+                                {result.status}
+                              </span>
+                            </div>
                           </div>
+                          {result.reason && result.status !== 'Valid' && (
+                            <p className="text-xs text-gray-600 mt-1">{result.reason}</p>
+                          )}
+                          {result.status === 'Valid' && (
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">Format ✓</span>
+                              <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">Domain ✓</span>
+                              {!result.isDisposable && <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">Permanent ✓</span>}
+                              {!result.isRoleBased && <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">Personal ✓</span>}
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -336,7 +408,7 @@ const EmailChecker = () => {
 
       {/* Footer */}
       <div className="text-center w-full max-w-5xl mt-3 sm:mt-4 py-2 px-2 sm:px-4">
-        <div className="text-xs text-gray-600 font-bold mb-1">DISCLAIMER: Email validation is for format and domain checking only.</div>
+        <div className="text-xs text-gray-600 font-bold mb-1">ENHANCED VALIDATION: Checks format, domain, typo detection, disposable emails, and role-based emails.</div>
         <p className="text-xs text-gray-500">
           © {new Date().getFullYear()} Email Validator & Checker | All Rights Reserved
         </p>
