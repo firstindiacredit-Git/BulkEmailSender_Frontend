@@ -135,7 +135,7 @@ const EmailChecker = () => {
     try {
       const emailList = emails.split(',').map(email => email.trim()).filter(email => email)
       
-      const response = await fetch('http://localhost:5000/validate-emails', {
+      const response = await fetch('https://bulkemail.pizeonfly.com/validate-emails', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -134,7 +134,7 @@ const EmailMessageSender = () => {
     setStatus('Sending...')
     
     try {
-      const response = await fetch('http://localhost:5000/send-emails', {
+      const response = await fetch('https://bulkemail.pizeonfly.com/send-emails', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
